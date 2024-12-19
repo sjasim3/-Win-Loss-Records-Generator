@@ -1,0 +1,231 @@
+/*
+* Filename:		m4.cpp
+* Project:      Major Assignment 4
+* Programmer:	Sarah Jasim
+* Date:			2022-12-9
+* Description:  This program is wrote to generate sport team win-loss records from game results in files. Which will use a lot of FILES AND STRING PARSING.
+*/
+
+//libraries
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <cstring>
+#pragma warning(disable: 4996)
+
+//constants
+#define STATUS_ERROR -1
+#define STATUS_OK 1
+#define FUNCTION_OK 2
+#define MAX_CHARACTERS 40
+#define MISSING_COMMA -2
+#define MISSING_DASH -3
+#define OPENING_ERROR -4
+
+//prototypes
+int processGames(char teamResultFile[]);
+int parseLine(char gameResultString[], char oponentName[], int* primaryTeam, int* opponentTeam);
+
+int main()
+{
+	//declaring & inincializing variables
+	char resultFile[MAX_CHARACTERS] = ""; //filename for the team's game result file
+	int progress = 0;
+	char files[MAX_CHARACTERS] = "";
+
+	//opening and reading file
+	FILE* teamFile = NULL;
+	teamFile = fopen("teams.txt", "r");
+	if (teamFile == NULL)
+	{
+		printf("Error opening file"); // if does not open, return and error
+		return -1;
+	}
+	while (fgets(resultFile, MAX_CHARACTERS, teamFile) != NULL)
+	{
+		if (!feof(teamFile))
+		{
+
+			resultFile[strcspn(resultFile, "\n")] = '\0';
+
+			if (strcspn(resultFile, "\0") == 0) //skipping blank/empty lines
+			{
+				continue;
+			}
+			strcpy(files, resultFile);
+
+		}
+		else if (feof(teamFile))
+		{
+			strcpy(files, resultFile);
+			progress = processGames(files);
+			if (progress == OPENING_ERROR)
+			{
+				break;
+			}
+			if (progress == FUNCTION_OK)
+			{
+				break;
+			}
+		}
+	}
+
+	fclose(teamFile);
+	return 0;
+}
+
+
+
+
+
+
+//Function: processGames()
+//Parameters: char teamResultFile, which is the filename for the team's game result file
+//Return values: returns status
+//Description: Processing each team game result file within proccessGames function. Will total all wins, losses, and ties for that team and then display a final winning percentage.
+
+int processGames(char teamResultFile[])
+{
+	//declaring and inicializing variables
+	double totalWins = 0;
+	double totalLoses = 0;
+	double totalTies = 0;
+	double finalWinPerc = 0;
+	char readName[MAX_CHARACTERS] = "";
+	int fileStatus = 0;
+	char primary[MAX_CHARACTERS] = "";
+	char oponent[MAX_CHARACTERS] = "";
+	int primaryScore = 0;
+	int oponentScore = 0;
+	int i = 0;
+
+	//opening and reading file
+	FILE* teamFile = NULL;
+	teamFile = fopen(teamResultFile, "r");
+	if (teamFile == NULL)
+	{
+		printf("Error: Can't open %s. Skipping team.", teamResultFile);
+		return STATUS_ERROR;
+	}
+	else
+	{
+		printf("processing %s:\n", teamResultFile);
+		char* fName = teamResultFile;
+
+		while (*fName != '.')//anything that is not '.' in string to pointer
+		{
+			primary[i] = *fName;//copying one char at a time from pointer to string
+			fName++;
+			i++;//iterating everytime while doing so
+		}
+		primary[i] = '\0';//Null terminating the new string
+
+		while (fgets(readName, MAX_CHARACTERS, teamFile) != NULL)
+		{
+			if (!feof(teamFile))
+			{
+				readName[strcspn(readName, "\n")] = '\0';
+
+				if (strcspn(readName, "\0") == 0)
+				{
+					continue; //skipping blank lines
+				}
+			}
+
+			if (fileStatus == MISSING_DASH)
+			{
+				printf("Error: dash is missing!\n");
+				continue;
+			}
+			else if (fileStatus == MISSING_COMMA)
+			{
+				printf("Error: comma is missing!\n");
+				continue;
+			}
+
+			fileStatus = parseLine(readName, oponent, &primaryScore, &oponentScore);
+			if (fileStatus == STATUS_OK)
+			{
+				if (primaryScore > oponentScore)
+				{
+					printf("\t %s beat %s %d-%d \n", primary, oponent, primaryScore, oponentScore);
+					totalWins += 1;
+				}
+				else if (primaryScore == oponentScore)
+				{
+					printf("\t %s and %s tied at %d \n", primary, oponent, primaryScore);
+					totalTies += 1;
+				}
+				else if (primaryScore < oponentScore)
+				{
+					printf("\t %s lost to %s %d-%d \n", primary, oponent, oponentScore, primaryScore);
+					totalLoses += 1;
+				}
+			}
+
+		}
+
+		//total all wins, losses, and ties for that team and then display a final winning percentage.
+		finalWinPerc = (2 * totalWins + totalTies) / (2 * (totalWins + totalLoses + totalTies));
+		printf("Season result for %s: %.3f (%d-%d-%d)\n\n", primary, finalWinPerc, (int)totalWins, (int)totalLoses, (int)totalTies);
+		return FUNCTION_OK;
+	}
+}
+
+
+
+
+
+//Function: parseLine()
+//Parameters: 4 parameters: 2 arrays, and 2 pointers: char gameResultString[], char oponentName[], int *primaryTeamScore, int *opponentTeamScore
+//Return values: returns status
+//Description: This function is to parse (or extract information from) each game result. 
+
+int parseLine(char gameResStr[], char opName[], int* priTeamScore, int* opTeamScore)
+{
+	char opponent[MAX_CHARACTERS] = "";
+	char priResult[MAX_CHARACTERS] = "";
+	char oppResult[MAX_CHARACTERS] = "";
+	char line[MAX_CHARACTERS] = "";
+
+	strcpy(line, gameResStr);//Copying to manipulate
+	char* opp = line;//pointer on new string
+	char* opS = strchr(gameResStr, '-');//pointer to the dash in the string
+	if (opS == NULL)
+	{
+		return MISSING_DASH;
+	}
+	char* pScore = strchr(gameResStr, ',');
+	if (pScore == NULL)
+	{
+		return MISSING_COMMA;
+	}
+
+	int i = 0;//iterator
+
+	while (*opp != ',')//anything that is not ',' in string to pointer
+	{
+		opName[i] = *opp;
+		opp++;
+		i++;
+	}
+	opName[i] = '\0';//Null terminating end of string
+
+	strcpy(oppResult, opS + 1);//Getting opponent score by copying chars after the comma
+
+	i = 0;//reset iteration
+	while (*pScore != '-')//same proccess for primary score
+	{
+		pScore++;
+		priResult[i] = *pScore;
+		i++;
+	}
+	priResult[strlen(priResult) - 1] = '\0';//null terminating here as well
+
+
+	*priTeamScore = atoi(priResult);//assigning pointers to converted strings to int
+	*opTeamScore = atoi(oppResult);
+
+
+	return STATUS_OK;
+}
