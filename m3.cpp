@@ -1,0 +1,168 @@
+/*
+* Filename:		m3.cpp
+* Project:      Major Assignment 3
+* Programmer:	Sarah Jasim
+* Date:			2022-11-30
+* Description:  This program is meant to calculate hotel bills for a meeting. Only up to a maximum of 4 people can rent a hotel room.
+*/
+
+#include <string>
+#include <iostream>
+using namespace std;
+
+//constants
+const int ERROR = -1;
+
+//prototypes
+double calculateCostOfRoom(const double roomRateArr[], int checkInIndex, int checkOutIndex);
+int dayToIndex(string dayEntered);
+
+int main()
+{
+	//declaring and inicializing variables
+	string name;
+	string checkIn;
+	string checkOut;
+	double totalRoomCost = 0;
+	double totalGroupCost = 0;
+	int checkInInd = 0;
+	int checkOuInd = 0;
+	int people = 0;
+
+	//Each element of the array represents the room rate on a particular night.
+	const double kRoomRateArr[] = {127.50, 128.25, 130.50, 150, 150, 162.50}; //Starts with Sunday through Friday in order
+
+	//A maximum of 4 people renting hotel rooms. The meeting is on Thur
+	while (people < 4)
+	{
+		people++;
+
+		cout << "Name: ";   
+		getline(cin, name); //getting input from user
+		if (name == "")	    //if name feild is empty then show an error and start loop from beginning
+		{
+			cout << "Error: name is missing. Skipping this person." << endl << endl;
+			continue;
+		}
+
+
+		cout << "Check-in day: ";
+		getline(cin, checkIn);
+		if (checkIn == "")   //if name feild is empty then show an error & skip to next person
+		{
+			cout << "Error: check-in is missing. Skipping this person." << endl << endl;
+			continue;
+		}
+		checkInInd = dayToIndex(checkIn); 
+		if (checkInInd == ERROR)  
+		{
+			cout << "Error: Invalid check-in day. Skipping this person." << endl << endl;
+			continue;
+		}
+		else if (checkIn == "sat")
+		{
+			cout << "Error: Missing the meeting. Skipping this person." << endl << endl;
+			continue;
+		}
+
+
+		cout << "Check-out day: ";
+		getline(cin, checkOut);
+		if (checkOut == "")	  //if checkout feild is empty then show an error and start loop from beginning or  & skip to next person
+		{
+			cout << "Error: check-out is missing. Skipping this person." << endl << endl;
+			continue;
+		}
+		checkOuInd = dayToIndex(checkOut);
+		if (checkOuInd == ERROR)
+		{
+			cout << "Error: Invalid check-out day. Skipping this person." << endl << endl;
+			continue;
+		}
+		else if (checkOut == "sun")
+		{
+			cout << "Error: Missing the meeting. Skipping this person." << endl << endl;
+			continue;
+		}
+
+
+		else if (checkOuInd == checkInInd) //If checking in and out at the same day, then show an error statment & skip to next person
+		{
+			cout << "Error: Invalid length of stay. Skipping this person." << endl << endl;
+			continue;
+		}
+
+		totalRoomCost = calculateCostOfRoom(kRoomRateArr, checkInInd, checkOuInd);  //passing parameters as arguments
+		totalGroupCost += totalRoomCost;   //adding & calculating the total group cost 
+
+		cout << "The room cost for " << name << " is " << totalRoomCost << "!" << endl << endl;  // show total calculated room cost for 1 person
+	}
+	cout << "The total room cost for the entire group is " << totalGroupCost << "!" << endl;  // show total calculated room cost for everyone
+
+	return 0;
+}
+
+
+
+
+
+//Function: calculateCostOfRoom()
+//Parameters: string dayEntered ::indicates what day was entered by the user.
+//Return values: returns totalRoomCost 
+//Description: Using this function to convert from the user input to a useful array index
+
+int dayToIndex(string dayEntered)
+{
+	if (dayEntered == "sun")
+	{
+		return 0;
+	}
+	else if (dayEntered == "mon")
+	{
+		return 1;
+	}
+	else if (dayEntered == "tue")
+	{
+		return 2;
+	}
+	else if (dayEntered == "wed")
+	{
+		return 3;
+	}
+	else if (dayEntered == "thu")
+	{
+		return 4;
+	}
+	else if (dayEntered == "fri")
+	{
+		return 5;
+	}
+	else if (dayEntered == "sat")
+	{
+		return 6;
+	}
+	else
+	{
+		return ERROR;
+	}
+}
+
+
+
+
+
+//Function: calculateCostOfRoom()
+//Parameters: const double kRoomRateArr[], int checkInIndex, int checkOutIndex
+//Return values: returns totalRoomCost 
+//Description: Using this function to calculate the cost of the hotel room for a person. 
+
+double calculateCostOfRoom(const double roomRateArr[], int checkInIndex, int checkOutIndex)
+{
+	double totalRoomCost = 0;
+
+	for(int i = checkInIndex; i < checkOutIndex; i++)
+	{
+		totalRoomCost += roomRateArr[i];
+	}
+	return totalRoomCost;
+}
